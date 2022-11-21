@@ -2,7 +2,6 @@ package ru.job4j.concurrent;
 
 public class Wget {
     public static void main(String[] args) {
-        System.out.println("1");
         Thread thread = new Thread(
                 () -> {
                     for (int index = 0; index <= 100; index++) {
@@ -15,8 +14,6 @@ public class Wget {
                     }
                 }
         );
-        System.out.println("2");
         thread.start();
-        System.out.println("3");
     }
 }

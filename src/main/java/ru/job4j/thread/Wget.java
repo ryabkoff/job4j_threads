@@ -22,14 +22,20 @@ public class Wget implements Runnable {
              FileOutputStream fileOutputStream = new FileOutputStream(fileName)) {
             byte[] dataBuffer = new byte[1024];
             int bytesRead;
+            int downloadData = 0;
             long start = System.currentTimeMillis();
+            long elapsed;
             while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
                 fileOutputStream.write(dataBuffer, 0, bytesRead);
-                long elapsed = System.currentTimeMillis() - start;
-                if (elapsed < speed) {
-                    Thread.sleep(speed - elapsed);
+                downloadData += bytesRead;
+                if (downloadData >= speed) {
+                    elapsed = System.currentTimeMillis() - start;
+                    if (elapsed < 1000) {
+                        Thread.sleep(1000 - elapsed);
+                    }
+                    downloadData = 0;
+                    start = System.currentTimeMillis();
                 }
-                start = System.currentTimeMillis();
             }
         } catch (IOException  e) {
             e.printStackTrace();

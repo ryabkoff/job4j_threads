@@ -15,6 +15,5 @@ public class CountTest {
         first.join();
         second.join();
         assertThat(count.get()).isEqualTo(2);
-        System.out.println("Привет");
     }
 }

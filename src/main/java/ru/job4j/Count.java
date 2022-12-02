@@ -13,6 +13,7 @@ public class Count {
     }
 
     public synchronized int get() {
+        System.out.println("Привет");
         return this.value;
     }
 }

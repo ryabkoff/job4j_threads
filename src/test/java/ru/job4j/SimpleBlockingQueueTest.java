@@ -2,109 +2,86 @@ package ru.job4j;
 
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.IntStream;
 
-class SimpleBlockingQueueTest {
-
+import static org.assertj.core.api.Assertions.assertThat;
+public class SimpleBlockingQueueTest {
     @Test
-    public void whenLimit10Offer10Poll10() throws InterruptedException {
-        SimpleBlockingQueue<Integer> queue = new SimpleBlockingQueue<>(10);
-        Thread producer = new Thread(() -> {
-            try {
-                for (int i = 0; i < 10; i++) {
-                    queue.offer(i);
+    public void whenFetchAllThenGetIt() throws InterruptedException {
+        final CopyOnWriteArrayList<Integer> buffer = new CopyOnWriteArrayList<>();
+        final SimpleBlockingQueue<Integer> queue = new SimpleBlockingQueue<>(5);
+        Thread producer = new Thread(
+                () -> {
+                    IntStream.range(0, 5).forEach(value ->
+                    {
+                        try {
+                            queue.offer(value);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                            Thread.currentThread().interrupt();
+                        }
+                    }
+                    );
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
-        Thread consumer = new Thread(() -> {
-            try {
-                for (int i = 0; i < 10; i++) {
-                    queue.poll();
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
-        consumer.start();
+        );
         producer.start();
-        consumer.join();
+        Thread consumer = new Thread(
+                () -> {
+                    while (!queue.isEmpty() || !Thread.currentThread().isInterrupted()) {
+                        try {
+                            buffer.add(queue.poll());
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                            Thread.currentThread().interrupt();
+                        }
+                    }
+                }
+        );
+        consumer.start();
         producer.join();
-        assertThat(queue.size()).isEqualTo(0);
+        consumer.interrupt();
+        consumer.join();
+        assertThat(buffer).containsExactlyElementsOf(Arrays.asList(0, 1, 2, 3, 4));
     }
 
     @Test
-    public void whenLimit5Offer10Poll10() throws InterruptedException {
-        SimpleBlockingQueue<Integer> queue = new SimpleBlockingQueue<>(5);
-        Thread producer = new Thread(() -> {
-            try {
-                for (int i = 0; i < 10; i++) {
-                    queue.offer(i);
+    public void whenFetchFirst() throws InterruptedException {
+        final CopyOnWriteArrayList<Integer> buffer = new CopyOnWriteArrayList<>();
+        final SimpleBlockingQueue<Integer> queue = new SimpleBlockingQueue<>(5);
+        Thread producer = new Thread(
+                () -> {
+                    IntStream.range(0, 5).forEach(value ->
+                            {
+                                try {
+                                    queue.offer(value);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                    Thread.currentThread().interrupt();
+                                }
+                            }
+                    );
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
-        Thread consumer = new Thread(() -> {
-            try {
-                for (int i = 0; i < 10; i++) {
-                    queue.poll();
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
-        consumer.start();
+        );
         producer.start();
-        consumer.join();
-        producer.join();
-        assertThat(queue.size()).isEqualTo(0);
-    }
+        Thread consumer = new Thread(
+                () -> {
+                    try {
+                        buffer.add(queue.poll());
 
-    @Test
-    public void whenLimit10Offer5() throws InterruptedException {
-        SimpleBlockingQueue<Integer> queue = new SimpleBlockingQueue<>(10);
-        Thread producer = new Thread(() -> {
-            try {
-                for (int i = 0; i < 5; i++) {
-                    queue.offer(i);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        Thread.currentThread().interrupt();
+                    }
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
-        producer.start();
-        producer.join();
-        assertThat(queue.size()).isEqualTo(5);
-    }
-
-    @Test
-    public void whenLimit10Offer10Poll5() throws InterruptedException {
-        SimpleBlockingQueue<Integer> queue = new SimpleBlockingQueue<>(10);
-        Thread producer = new Thread(() -> {
-            try {
-                for (int i = 0; i < 10; i++) {
-                    queue.offer(i);
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
-        Thread consumer = new Thread(() -> {
-            try {
-                for (int i = 0; i < 5; i++) {
-                    queue.poll();
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
+        );
         consumer.start();
-        producer.start();
-        consumer.join();
         producer.join();
-        assertThat(queue.size()).isEqualTo(5);
+        consumer.interrupt();
+        consumer.join();
+        assertThat(buffer).containsExactlyElementsOf(List.of(0));
     }
 
 }

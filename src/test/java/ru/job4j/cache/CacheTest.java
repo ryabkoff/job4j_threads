@@ -36,4 +36,14 @@ class CacheTest {
         assertThat(cachedBase.getVersion()).isEqualTo(base1.getVersion() + 1);
     }
 
+    @Test
+    void whenNotUpdateBadVersion() {
+        Cache cache = new Cache();
+        Base base1 = new Base(1, 1, "base1");
+        Base base2 = new Base(1, 2, "base2");
+        cache.add(base1);
+        assertThatThrownBy(() -> cache.update(base2))
+                .isInstanceOf(OptimisticException.class)
+                .hasMessageContaining("Versions are not equal");
+    }
 }

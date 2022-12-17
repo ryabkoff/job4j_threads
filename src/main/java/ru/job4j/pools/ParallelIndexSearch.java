@@ -28,13 +28,10 @@ public class ParallelIndexSearch<T> extends RecursiveTask<Integer> {
 
     @Override
     protected Integer compute() {
-        int index;
         if (to - from  <= LINEAR_SIZE) {
-            index = findByLinear(array, value);
-        } else {
-            index = findByParallel(array, value);
+            return findByLinear(array, value);
         }
-        return index;
+        return findByParallel(array, value);
     }
 
     private int findByLinear(T[] array, T value) {
